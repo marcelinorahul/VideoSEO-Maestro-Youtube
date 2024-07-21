@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoSEO Maestro - Optimasi SEO Video YouTube</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .input-section,
+        .results-section {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #27ae60;
+        }
+
+        #results {
+            margin-top: 1rem;
+        }
+
+        .result-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .result-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .tag {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        #loadingSpinner {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>VideoSEO Maestro</h1>
+        <p>Optimalkan video YouTube Anda untuk visibilitas dan engagement yang lebih baik</p>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <section class="input-section">
+                <div class="input-group">
+                    <label for="videoUrl">URL Video YouTube:</label>
+                    <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
+                </div>
+                <div class="input-group">
+                    <label for="videoTitle">Judul Video:</label>
+                    <input type="text" id="videoTitle" placeholder="Masukkan judul video Anda">
+                </div>
+                <div class="input-group">
+                    <label for="videoDescription">Deskripsi Video:</label>
+                    <textarea id="videoDescription" rows="5" placeholder="Masukkan deskripsi video Anda"></textarea>
+                </div>
+                <button onclick="optimizeVideo()">Optimalkan Video</button>
+            </section>
+
+            <section class="results-section">
+                <h2>Hasil Optimasi</h2>
+                <div id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Menganalisis video Anda...</p>
+                </div>
+                <div id="results"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        function optimizeVideo() {
+            const videoUrl = document.getElementById('videoUrl').value;
+            const videoTitle = document.getElementById('videoTitle').value;
+            const videoDescription = document.getElementById('videoDescription').value;
+            const resultsDiv = document.getElementById('results');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            if (!videoUrl || !videoTitle || !videoDescription) {
+                alert('Mohon isi semua kolom');
+                return;
+            }
+
+            loadingSpinner.style.display = 'block';
+            resultsDiv.innerHTML = '';
+
+            const videoId = extractVideoId(videoUrl);
+
+            if (!videoId) {
+                showError('URL YouTube tidak valid');
+                return;
+            }
+
+            Promise.all([
+                analyzeContent(videoTitle, videoDescription),
+                getVideoStatistics(videoId)
+            ]).then(([analysisResults, statistics]) => {
+                displayResults(analysisResults, statistics);
+            }).catch(error => {
+                showError('Terjadi kesalahan saat menganalisis video');
+                console.error(error);
+            }).finally(() => {
+                loadingSpinner.style.display = 'none';
+            });
+        }
+
+        function extractVideoId(url) {
+            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        function analyzeContent(title, description) {
+            const combinedText = `${title} ${description}`;
+            const keywords = extractKeywords(combinedText);
+            const suggestedTags = generateTags(keywords);
+            const titleSuggestions = generateTitleSuggestions(title, keywords);
+            const descriptionSuggestions = generateDescriptionSuggestions(description, keywords);
+
+            return {
+                keywords,
+                suggestedTags,
+                titleSuggestions,
+                descriptionSuggestions
+            };
+        }
+
+        function extractKeywords(text) {
+            const words = text.toLowerCase().match(/\b(\w+)\b/g);
+            const wordCount = {};
+            words.forEach(word => {
+                if (word.length > 2) {
+                    wordCount[word] = (wordCount[word] || 0) + 1;
+                }
+            });
+            return Object.entries(wordCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8)
+                .map(entry => entry[0]);
+        }
+
+        function generateTags(keywords) {
+            return keywords.map(keyword => keyword.replace(/\s+/g, ''));
+        }
+
+        function generateTitleSuggestions(title, keywords) {
+            const suggestions = [
+                `${title} - ${keywords[0]} ${keywords[1]}`,
+                `Cara ${title} | Tips ${keywords[2]}`,
+                `${keywords[0]} ${keywords[1]}: ${title}`,
+                `${title}: Panduan ${keywords[3]} untuk Pemula`
+            ];
+            return suggestions;
+        }
+
+        function generateDescriptionSuggestions(description, keywords) {
+            let improvedDescription = description;
+            keywords.forEach(keyword => {
+                if (!description.toLowerCase().includes(keyword)) {
+                    improvedDescription += ` Pelajari lebih lanjut tentang ${keyword} dalam video ini.`;
+                }
+            });
+            return improvedDescription;
+        }
+
+        function getVideoStatistics(videoId) {
+            return new Promise((resolve, reject) => {
+                gapi.load('client', () => {
+                    gapi.client.init({
+                        'apiKey': 'YOUR_YOUTUBE_API_KEY',
+                        'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest'],
+                    }).then(() => {
+                        return gapi.client.youtube.videos.list({
+                            part: 'statistics,snippet',
+                            id: videoId
+                        });
+                    }).then(response => {
+                        const videoData = response.result.items[0];
+                        resolve({
+                            statistics: videoData.statistics,
+                            snippet: videoData.snippet
+                        });
+                    }).catch(reject);
+                });
+            });
+        }
+
+        function displayResults(analysisResults, videoData) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="result-item">
+                    <h3>Kata Kunci Utama</h3>
+                    <p>${analysisResults.keywords.join(', ')}</p>
+                </div>
+                <div class="result-item">
+                    <h3>Tag yang Disarankan</h3>
+                    <p>${analysisResults.suggestedTags.map(tag => `<span class="tag">${tag}</span>`).join('')}</p>
+                </div>
+                <div class="result-item">
+                    <h3>Saran Judul</h3>
+                    <ul>
+                        ${analysisResults.titleSuggestions.map(title => `<li>${title}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="result-item">
+                    <h3>Deskripsi yang Ditingkatkan</h3>
+                    <p>${analysisResults.descriptionSuggestions}</p>
+                </div>
+                <div class="result-item">
+                    <h3>Statistik Video</h3>
+                    <p>Penayangan: ${videoData.statistics.viewCount}</p>
+                    <p>Suka: ${videoData.statistics.likeCount}</p>
+                    <p>Komentar: ${videoData.statistics.commentCount}</p>
+                </div>
+                <div class="result-item">
+                    <h3>Tingkat Engagement</h3>
+                    <p>${calculateEngagementRate(videoData.statistics)}%</p>
+                </div>
+            `;
+        }
+
+        function calculateEngagementRate(statistics) {
+            const totalEngagements = parseInt(statistics.likeCount) + parseInt(statistics.commentCount);
+            const viewCount = parseInt(statistics.viewCount);
+            return ((totalEngagements / viewCount) * 100).toFixed(2);
+        }
+
+        function showError(message) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `<div class="result-item"><p style="color: red;">${message}</p></div>`;
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>
